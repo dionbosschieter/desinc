@@ -1,29 +1,23 @@
-//##
-//#Dion Bosschieter Super slow implementation of DES,  data encryption standard
-//#Compile&run: gcc des.c -o des ; ./des
-//##
+/*
+  Dion Bosschieter implementation of DES,  data encryption standard
+  Compile&run: gcc -Wall des.c -o des ; ./des
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void printbits(unsigned long b)
+void print64bits(unsigned long b)
 {
 	int i;
 	int s = 8 * (sizeof b) - 1;
 
 	for (i = s; i >= 0; i--)
 	{
-        unsigned long mask = 1L << i;	
-		putchar(b & mask ? '1' : '0');
+    unsigned long mask = 1L << i;	
+    putchar(b & mask ? '1' : '0');
 	}
 	putchar('\n');
-}
-
-void print1bit(unsigned long b)
-{
-    unsigned long mask = 1L << 0;	
-	putchar(b & mask ? '1' : '0');
 }
 
 void print32bits(int b)
@@ -33,7 +27,7 @@ void print32bits(int b)
 
 	for (i = s; i >= 0; i--)
 	{
-        int mask = 1 << i;	
+    int mask = 1 << i;	
 		putchar(b & mask ? '1' : '0');
 	}
 	putchar('\n');
@@ -43,33 +37,48 @@ void rotate_right(unsigned long* val, unsigned long n, unsigned long* newval)
 {
 	//shift bits zodat je naar links shift of naar rechts shift met 28 bits 
 	// zodat het aan het begin er bij word geplakt
-	*newval = (*val << n) | (*val >> 28L - n);
+	*newval = (*val << n) | (*val >> (28L - n));
 	//mask zodat de laatste bits niet mee worden genomen die geshift zijn
 	*newval = *newval & 0xFFFFFFF; 
 }
 
-int main()
+void permute(unsigned long* input, unsigned long* output, int* permutationTable, int tablelength, int bitlength) 
 {
-	unsigned long M = 0x123456789ABCDEF;
-	unsigned long K = 0x133457799BBCDFF1;
-	unsigned long Kp, L, R, C0, D0, Cn[16], Dn[16], Kn[16], CD, IP, E, RL, cypher = 0;
-	int i, ii, iii, Ln[17], Rn[17];
-	
-	printf("M  = ");
-	printbits(M);
-	
-	//split M in L0 en R0
-	L = M & 0xFFFFFFFF;
-	R = (M >> 32) & 0xFFFFFFFF;
+  int i;
+  *output = 0L;
 
-	printf("L0 = ");
-	printbits(L);
-	printf("R0 = ");
-	printbits(R);
-	printf("\nK  = ");
-	printbits(K);
-	
-	//defineren van permutatie tabellen
+	for(i=0;i<tablelength;i++) {
+		if (*input & (1L << (bitlength - permutationTable[i]))) { 
+			*output |= 1L << ((tablelength-1)-i);
+		}
+	}
+}
+
+void permuteIntToLong(int* input, unsigned long* output, int* permutationTable, int tablelength) 
+{
+  int i;
+  *output = 0L;
+
+	for(i=0;i<tablelength;i++) {
+		if (*input & (1L << (32 - permutationTable[i]))) { 
+			*output |= 1L << ((tablelength-1)-i);
+		}
+	}
+}
+
+void permuteInt(int* input, int* output, int* permutationTable) 
+{
+  int i;
+  *output = 0L;
+
+	for(i=0;i<32;i++) {
+		if (*input & (1L << (32 - permutationTable[i]))) { 
+			*output |= 1L << ((32-1)-i);
+		}
+	}
+}
+
+//defineren van permutatie tabellen
 	int PC_1[56] = {
 			57,   49,    41,   33,    25,    17,    9,
 			 1,   58,    50,   42,    34,    26,   18,
@@ -111,22 +120,22 @@ int main()
 			 28,    29,   30,    31,    32,    1};
 	
 	int S[8][4][16] = 
-	{{{14,  4, 13,  1,  2,  15,  11,  8,  3,  10,  6,  12,  5,  9,   0,  7},
-	{ 0, 15,  7,  4,  14,  2,  13,  1,  10,  6,  12, 11,  9,  5,   3,  8},
-	{ 4,  1, 14,  8,  13,  6,   2, 11,  15, 12,   9,  7,  3, 10,   5,  0},
-	{15, 12,  8,  2,   4,  9,   1,  7,   5, 11,   3, 14, 10,  0,   6, 13}},
+    {{{14,  4, 13,  1,  2,  15,  11,  8,  3,  10,  6,  12,  5,  9,   0,  7},
+    { 0, 15,  7,  4,  14,  2,  13,  1,  10,  6,  12, 11,  9,  5,   3,  8},
+    { 4,  1, 14,  8,  13,  6,   2, 11,  15, 12,   9,  7,  3, 10,   5,  0},
+    {15, 12,  8,  2,   4,  9,   1,  7,   5, 11,   3, 14, 10,  0,   6, 13}},
 	
     {{ 15,  1,  8, 14,  6, 11,   3,  4,   9,  7,   2, 13,  12,  0,  5, 10},
     {  3, 13,  4,  7, 15,  2,   8, 14,  12,  0,   1, 10,   6,  9, 11,  5},
     {  0, 14,  7, 11, 10,  4,  13,  1,   5,  8,  12,  6,   9,  3,  2, 15},
-	{ 13,  8, 10,  1,  3, 15,   4,  2,  11,  6,   7, 12,   0,  5, 14,  9}},
+	  { 13,  8, 10,  1,  3, 15,   4,  2,  11,  6,   7, 12,   0,  5, 14,  9}}, 
 
     {{ 10,  0,  9, 14,   6,  3, 15,  5,  1, 13,  12,  7,  11,  4,   2,  8},
     { 13,  7,  0,  9,   3,  4,  6, 10,  2,  8,   5, 14,  12, 11,  15,  1},
     { 13,  6,  4,  9,   8, 15,  3,  0, 11,  1,   2, 12,   5, 10,  14,  7},
     {  1, 10, 13,  0,   6,  9,  8,  7,  4, 15,  14,  3,  11,  5,   2, 12}},
 
-	{{  7, 13,  14, 3,   0,  6,   9, 10,  1,  2,  8,  5,  11, 12,   4, 15},
+  	{{  7, 13,  14, 3,   0,  6,   9, 10,  1,  2,  8,  5,  11, 12,   4, 15},
     { 13,  8,  11, 5,   6, 15,   0,  3,  4,  7,  2, 12,   1, 10,  14,  9},
     { 10,  6,   9, 0,  12, 11,   7, 13, 15,  1,  3, 14,   5,  2,   8,  4},
     {  3, 15,   0, 6,  10,  1,  13,  8,  9,  4,  5, 11,  12,  7,   2, 14}},
@@ -152,152 +161,138 @@ int main()
     {  2,  1, 14,  7,   4, 10,   8, 13,  15, 12,   9,  0,  3,  5,  6, 11}}};
 	
 	int P[32] = {
-		 16,   7,  20,  21,
-		 29,  12,  28,  17,
-		  1,  15,  23,  26,
-		  5,  18,  31,  10,
-		  2,   8,  24,  14,
-		 32,  27,   3,   9,
-		 19,  13,  30,   6,
-		 22,  11,   4,  25};
+     16,   7,  20,  21,
+     29,  12,  28,  17,
+      1,  15,  23,  26,
+      5,  18,  31,  10,
+      2,   8,  24,  14,
+     32,  27,   3,   9,
+     19,  13,  30,   6,
+     22,  11,   4,  25};
 		 
 		 
 	int IP_1[64] = {
-            40,     8,   48,    16,    56,   24,    64,   32,
-            39,     7,   47,    15,    55,   23,    63,   31,
-            38,     6,   46,    14,    54,   22,    62,   30,
-            37,     5,   45,    13,    53,   21,    61,   29,
-            36,     4,   44,    12,    52,   20,    60,   28,
-            35,     3,   43,    11,    51,   19,    59,   27,
-            34,     2,   42,    10,    50,   18,    58,   26,
-            33,     1,   41,     9,    49,   17,    57,   25};
-	
+    40,     8,   48,    16,    56,   24,    64,   32,
+    39,     7,   47,    15,    55,   23,    63,   31,
+    38,     6,   46,    14,    54,   22,    62,   30,
+    37,     5,   45,    13,    53,   21,    61,   29,
+    36,     4,   44,    12,    52,   20,    60,   28,
+    35,     3,   43,    11,    51,   19,    59,   27,
+    34,     2,   42,    10,    50,   18,    58,   26,
+    33,     1,   41,     9,    49,   17,    57,   25};	
+
+unsigned long Des(unsigned long M, unsigned long K, int decrypt) 
+{
+	unsigned long Kp, C0, D0, Cn[16], Dn[16];
+  unsigned long CD, Kn[16], IP, E, RL, cypher = 0;
+
+	int i, j, Ln[17], Rn[17];
 	
 	//permuteren van Key met PC-1
-	for(i=0;i<56;i++) {
-		if (K & (1L << (64 - PC_1[i]))) { //omdat het omgedraaid wel werkt :S ???
-			Kp |= 1L << 55-i;//55-i == 56-i-i dit doe ik om de bits om te draaien
-		}
-	}
-	printf("Kp = ");
-	printbits(Kp);
+  permute(&K, &Kp, PC_1, 56, 64);
 	
 	//split permuted key in C0 en D0
 	C0 = (Kp >> 28) & 0xFFFFFFF;
 	D0 = Kp & 0xFFFFFFF;
 	
-	printf("C0 = ");
-	printbits(C0);
-	printf("D0 = ");
-	printbits(D0);
-	
 	unsigned long leftshifts[16] = {1L,1L,2L,2L,2L,2L,2L,2L,1L,2L,2L,2L,2L,2L,2L,1L};
-	//voer de leftrotates uit op de Cn^16 en Dn^16
-	rotate_right(&C0, leftshifts[0], &Cn[0]);
-	rotate_right(&D0, leftshifts[0], &Dn[0]);
 	
-	printf("C1 = ");
-	printbits(Cn[0]);
-	printf("D1 = ");
-	printbits(Dn[0]);
+  //voer de leftrotates uit op de Cn^16 en Dn^16
+	rotate_right(&C0, leftshifts[0], &Cn[0]); //C1
+	rotate_right(&D0, leftshifts[0], &Dn[0]); //D1
+	
 
 	for(i=1;i<16;i++) {
 		rotate_right(&Cn[i-1], leftshifts[i], &Cn[i]);
 		rotate_right(&Dn[i-1], leftshifts[i], &Dn[i]);
-		printf("C%i = ", i+1);
-		printbits(Cn[i]);
-		printf("D%i = ", i+1);
-		printbits(Dn[i]);
 	}
 	
 	//maak Kn^16 volgens permutie tabel 2 PC-2
-	//CD = ((Cn[0] << 28) | (Dn[0]));
-	//printbits(CD);
+  for(i=0;i<16;i++) {
+    //C1+C2
+  	CD = ((Cn[i] << 28) | (Dn[i]));
+    permute(&CD, &Kn[i], PC_2, 48, 56);
+  }
 	
-	for(i=0;i<16;i++){
-		for(ii=0;ii<48;ii++) {
-			if (((Cn[i] << 28) | (Dn[i])) & 1L << (56 - PC_2[ii])) { //omdat het omgedraaid wel werkt :S ???
-				Kn[i] |= 1L << 47-ii;//55-i == 56-i-i dit doe ik om de bits om te draaien
-			}
-		}
-		printf("K%i = ", i+1);
-		printbits(Kn[i]);
-	}
-	
-	//permutatie van Message
-	for(i=0;i<64;i++) {
-		if (M & (1L << (64 - IP_C[i]))) { //omdat het omgedraaid wel werkt :S ???
-			IP |= 1L << 63-i;//63-i == 64-i-i dit doe ik om de bits om te draaien
-		}
-	}
-	printf("M  = ");
-	printbits(M);
-	printf("IP = ");
-	printbits(IP);
-	
-	//split IP in 2 32bits integers omdat deze 32 int zijn :) ram houd van ons
+	//permutatu Message with IP_C
+  //creates IP
+  permute(&M, &IP, IP_C, 64, 64);
+
+	//split IP in 2 32bits integers
 	Ln[0] = (IP >> 32) & 0xFFFFFFFF;
 	Rn[0] = IP & 0xFFFFFFFF;
-	
-	printf("L0 = ");
-	print32bits(Ln[0]);
-	printf("R0 = ");
-	print32bits(Rn[0]);
-	
+
 	for(i=1;i<17;i++){
 		Ln[i] = Rn[i-1];
-		E = 0;
-		printf("L%i = ", i);
-		print32bits(Ln[i]);
 
-		//voer de E_BIT selectie tabel uit om Rn[i] van 32bits naar 48 bits om te zetten
-		for(ii=0;ii<48;ii++) {
-			if (Rn[i-1] & 1L << (32 - E_BIT[ii])) { //omdat het omgedraaid wel werkt :S ???
-				E |= 1L << 47-ii;//48-i == 47-i-i dit doe ik om de bits om te draaien
-			}
-		}
+ 		//permute with E_BIT table to make 48bits of the 32bits Rn[i-1]
+    permuteIntToLong(&Rn[i-1], &E, E_BIT, 48);
 		
-		E ^= Kn[i-1]; //Kn[0] is K1 omdat hij loopt van 0 tot 15
-		
+    //Xor E with key Kn
+    if(decrypt == 0) {
+      E ^= Kn[i-1];
+    } else if(decrypt == 1) {
+      E ^= Kn[16-i];
+    }
+
 		int f1 = 0;
-		int f=0;
 		
-		for(iii = 1; iii < 9; iii++) {  // 8 iteraties omdat er 8 * 6 bits zijn
-			//first bit = (iii*6)-6);
-			//last bit = (iii*6)-1);
+		for(j = 1; j < 9; j++) {  // 8 iteraties omdat er 8 * 6 bits zijn
+			//first bit = (j*6)-6);
+			//last bit = (j*6)-1);
 
-			int tempbitchingfirstrow = E >> (iii*6)-6 & 1L | E >> (iii*6)-2 & 2L;
-			int tempbitchingsecondrow = (E >> ((iii*6)-5)) & 0xF;
+			int firstrow  = ((E >> ((j*6)-6)) & 1L) | ((E >> ((j*6)-2)) & 2L);
+			int secondrow = (E >> (((j*6)-5)) & 0xF);
 
-			f1 |= S[7-(iii-1)][tempbitchingfirstrow][tempbitchingsecondrow] << (4*iii)-4;
+			f1 |= S[7-(j-1)][firstrow][secondrow] << ((4*j)-4);
 		}
 		
-		//permuteren van f1 met P
-		for(iii=0;iii<32;iii++) {
-			if (f1 & (1 << (32 - P[iii]))) {
-				f |= 1 << 31-iii;
-			}
-		}
+		//permute f1 with P
+		int f = 0;
+    permuteInt(&f1, &f, P);
+
+    //XOR L[i-1] with 
 		Rn[i] = Ln[i-1]^f;
-		printf("R%i = ", i);
-		print32bits(Rn[i]);
 	}
 	
-	//doe berekeningen met Rn[16] en Ln[16];
-	RL = Rn[16];
-	RL = RL << 32;
-	RL |= Ln[16];
+	//Compute RL with Rn[16] and Ln[16];
+  RL = Rn[16];
+	RL = (RL << 32);
+	RL |= (0x00000000FFFFFFFF & Ln[16]);
 	
-	printf("R16L16 = ");
-	printbits(RL);
-	
-	for(i=0;i<64;i++) {
-		if (RL & (1L << (64 - IP_1[i]))) {
-			cypher |= 1L << 63-i;
-		}
+	//Permute RL with permutation table IP_1
+  permute(&RL, &cypher, IP_1,64,64);
+ 
+  return cypher;
+}
+
+void printchar(char b[])
+{
+	int i;
+	int s = 8 * (sizeof b[0]) - 1;
+
+	for (i = s; i >= 0; i--)
+	{
+    int mask = 1 << i;	
+    putchar(b[0] & mask ? '1' : '0');
 	}
-	printf("IP-1 = ");
-	printbits(cypher); 
-	printf("Message = %lX\n", M);
-	printf("DIT IS IN Cypher text = %lX\n", cypher);
+	putchar('\n');
+}
+
+int main()
+{
+  unsigned long message = 0x0123456789ABCDEF; 
+	unsigned long key = 0x133457799BBCDFF1; 
+  unsigned long cyphertext, decrypted;
+
+  printf("Message = %lX\n", message);
+	printf("Key = %lX\n", key);
+
+  cyphertext = Des(message, key, 0);
+  printf("Encrypted cyphertext = %lX\n", cyphertext);
+  
+  decrypted = Des(cyphertext, key, 1);
+  printf("Decrypted text = %lX\n", decrypted);
+  
+  return 0;
 }
