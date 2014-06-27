@@ -8,7 +8,7 @@ compile with: gcc -Wall des.c -o des
 Run with: ./des
 
 Output
-======
+-----
 dion ~ $ ./des
 
 Message = 123456789ABCDEF
