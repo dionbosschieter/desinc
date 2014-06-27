@@ -3,8 +3,9 @@ desinc
 
 Implementation of DES in C
 
-compile with: ```bash gcc -Wall des.c -o des```
-Run with: ```bash ./des```
+compile with: ```gcc -Wall des.c -o des```
+
+Run with: ```./des```
 
 
 Output
