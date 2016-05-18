@@ -9,73 +9,73 @@
 
 void print64bits(unsigned long b)
 {
-	int i;
-	int s = 8 * (sizeof b) - 1;
+    int i;
+    int s = 8 * (sizeof b) - 1;
 
-	for (i = s; i >= 0; i--)
-	{
-    unsigned long mask = 1L << i;	
-    putchar(b & mask ? '1' : '0');
-	}
-	putchar('\n');
+    for (i = s; i >= 0; i--)
+    {
+        unsigned long mask = 1L << i;    
+        putchar(b & mask ? '1' : '0');
+    }
+    putchar('\n');
 }
 
 void print32bits(int b)
 {
-	int i;
-	int s = 8 * (sizeof b) - 1;
+    int i;
+    int s = 8 * (sizeof b) - 1;
 
-	for (i = s; i >= 0; i--)
-	{
-    int mask = 1 << i;	
-		putchar(b & mask ? '1' : '0');
-	}
-	putchar('\n');
+    for (i = s; i >= 0; i--)
+    {
+        int mask = 1 << i;    
+        putchar(b & mask ? '1' : '0');
+    }
+    putchar('\n');
 }
 
 void rotate_right(unsigned long* val, unsigned long n, unsigned long* newval)
 {
-	//shift bits zodat je naar links shift of naar rechts shift met 28 bits 
-	// zodat het aan het begin er bij word geplakt
-	*newval = (*val << n) | (*val >> (28L - n));
-	//mask zodat de laatste bits niet mee worden genomen die geshift zijn
-	*newval = *newval & 0xFFFFFFF; 
+    //shift bits zodat je naar links shift of naar rechts shift met 28 bits 
+    // zodat het aan het begin er bij word geplakt
+    *newval = (*val << n) | (*val >> (28L - n));
+    //mask zodat de laatste bits niet mee worden genomen die geshift zijn
+    *newval = *newval & 0xFFFFFFF; 
 }
 
 void permute(unsigned long* input, unsigned long* output, int* permutationTable, int tablelength, int bitlength) 
 {
-  int i;
-  *output = 0L;
+    int i;
+    *output = 0L;
 
-	for(i=0;i<tablelength;i++) {
-		if (*input & (1L << (bitlength - permutationTable[i]))) { 
-			*output |= 1L << ((tablelength-1)-i);
-		}
-	}
+    for(i=0;i<tablelength;i++) {
+        if (*input & (1L << (bitlength - permutationTable[i]))) { 
+            *output |= 1L << ((tablelength-1)-i);
+        }
+    }
 }
 
 void permuteIntToLong(int* input, unsigned long* output, int* permutationTable, int tablelength) 
 {
-  int i;
-  *output = 0L;
+    int i;
+    *output = 0L;
 
-	for(i=0;i<tablelength;i++) {
-		if (*input & (1L << (32 - permutationTable[i]))) { 
-			*output |= 1L << ((tablelength-1)-i);
-		}
-	}
+    for(i=0;i<tablelength;i++) {
+        if (*input & (1L << (32 - permutationTable[i]))) { 
+            *output |= 1L << ((tablelength-1)-i);
+        }
+    }
 }
 
 void permuteInt(int* input, int* output, int* permutationTable) 
 {
-  int i;
-  *output = 0L;
+    int i;
+    *output = 0L;
 
-	for(i=0;i<32;i++) {
-		if (*input & (1L << (32 - permutationTable[i]))) { 
-			*output |= 1L << ((32-1)-i);
-		}
-	}
+    for(i=0;i<32;i++) {
+        if (*input & (1L << (32 - permutationTable[i]))) { 
+            *output |= 1L << ((32-1)-i);
+        }
+    }
 }
 
 //defineren van permutatie tabellen
