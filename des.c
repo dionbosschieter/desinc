@@ -1,7 +1,7 @@
-/*
-  Dion Bosschieter implementation of DES,  data encryption standard
-  Compile&run: gcc -Wall des.c -o des ; ./des
-*/
+/**
+ * Dion Bosschieter implementation of DES,  data encryption standard
+ * Compile&run: gcc -Wall des.c -o des ; ./des
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
